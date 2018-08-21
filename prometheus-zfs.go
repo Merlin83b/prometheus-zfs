@@ -20,7 +20,7 @@ const (
 type Exporter struct {
 	mutex sync.RWMutex
 
-	poolUsage, providersFaulted, providersOnline prometheus.Gauge
+	poolUsage, providersFaulted, providersOnline, iopsWrite, iopsRead, bandwidthWrite, bandwidthRead prometheus.Gauge
 	zpool                                        *zpool
 }
 
@@ -41,6 +41,22 @@ func NewExporter(zp *zpool) *Exporter {
 			Name: "zpool_faulted_providers_count",
 			Help: "Number of FAULTED/UNAVAIL zpool providers (disks)",
 		}),
+        iopsRead: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "zpool_operations_read",
+			Help: "Pool-wide read operations in the last second",
+		}),
+        iopsWrite: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "zpool_operations_write",
+			Help: "Pool-wide write operations in the last second",
+		}),
+        bandwidthRead: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "zpool_bandwidth_read",
+			Help: "Pool-wide read bandwidth in the last second",
+		}),
+        bandwidthWrite: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "zpool_bandwidth_write",
+			Help: "Pool-wide write bandwidth in the last second",
+		}),
 	}
 }
 
@@ -50,6 +66,10 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.poolUsage.Desc()
 	ch <- e.providersOnline.Desc()
 	ch <- e.providersFaulted.Desc()
+    ch <- e.iopsRead.Desc()
+    ch <- e.iopsWrite.Desc()
+    ch <- e.bandwidthRead.Desc()
+    ch <- e.bandwidthWrite.Desc()
 }
 
 // Collect fetches the stats from configured ZFS pool and delivers them
@@ -63,10 +83,18 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.poolUsage.Set(float64(e.zpool.capacity))
 	e.providersOnline.Set(float64(e.zpool.online))
 	e.providersFaulted.Set(float64(e.zpool.faulted))
+    e.iopsRead.Set(float64(e.zpool.iops_r))
+    e.iopsWrite.Set(float64(e.zpool.iops_w))
+    e.bandwidthRead.Set(float64(e.zpool.bandwidth_r))
+    e.bandwidthWrite.Set(float64(e.zpool.bandwidth_w))
 
 	ch <- e.poolUsage
 	ch <- e.providersOnline
 	ch <- e.providersFaulted
+    ch <- e.iopsRead
+    ch <- e.iopsWrite
+    ch <- e.bandwidthRead
+    ch <- e.bandwidthWrite
 }
 
 var (
