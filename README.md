@@ -71,7 +71,7 @@ Run `go test -v` to run the tests with some verbosity.
 
 ## bin/zpool
 
-`bin/zpool` is a shell-script that can be used to fake a 'zpool' command on your local development machine where you might not have ZFS installed. It will simply run zpool over SSH on a remote host. Set environment variable ZFSHOST to whatever host you want to remote to.
+`bin/zpool` is a shell-script that can be used to fake a 'zpool' command on your local development machine where you might not have ZFS installed. It will simply run zpool over SSH on a remote host. Set environment variable ZFSHOST to whatever host you want to remote to and environment variable SSHUSER to the username you'd like to use to connect.  The script will use `sudo zpool` on that host.
 
 The script also has some simple sed statements prepared (you will have to remove the hash signs manually) to fake different pool statuses for testing purposes.
 
