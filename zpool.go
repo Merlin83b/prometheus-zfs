@@ -19,7 +19,7 @@ type zpool struct {
 }
 
 func (z *zpool) checkHealth(output string) (err error) {
-	output = strings.Trim(output, "\n")
+	output = strings.Trim(output, "\r\n")
 	if output == "ONLINE" {
 		z.healthy = true
 	} else if output == "DEGRADED" || output == "FAULTED" {
@@ -44,14 +44,20 @@ func (z *zpool) getProviders(output string) (err error) {
 	nonProviderLines := []string{
 		z.name,
 		"state:",
+        "scan:",
+        "config:",
 		"mirror-",
 		"raid0-",
 		"raid10-",
 		"raidz-",
 		"raidz2-",
 		"raidz3-",
+        "errors",
 	}
 	lines := strings.Split(output, "\n")
+    for index, line := range lines {
+       lines[index] = strings.TrimRight(line, "\r\n")
+    }
 	z.status = strings.Split(lines[1], " ")[2]
 
 	// Count all providers, ONLINE and FAULTED
