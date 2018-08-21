@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+    "os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -16,6 +17,10 @@ type zpool struct {
 	status   string
 	online   int64
 	faulted  int64
+    iops_r   int64
+    iops_w   int64
+    bandwidth_r int64
+    bandwidth_w int64
 }
 
 func (z *zpool) checkHealth(output string) (err error) {
@@ -53,7 +58,7 @@ func (z *zpool) getProviders(output string) (err error) {
 		"raidz2-",
 		"raidz3-",
         "errors",
-	}
+    }
 	lines := strings.Split(output, "\n")
     for index, line := range lines {
        lines[index] = strings.TrimRight(line, "\r\n")
@@ -80,6 +85,19 @@ func (z *zpool) getProviders(output string) (err error) {
 	return
 }
 
+func (z *zpool) getIostat(output string) (err error) {
+    lines := strings.Split(output, "\n")
+    for index, line := range lines {
+       lines[index] = strings.TrimRight(line, "\r\n")
+    }
+    values := strings.Fields(lines[len(lines)-2])
+    z.iops_r = decodeSuffix(values[3])
+    z.iops_w = decodeSuffix(values[4])
+    z.bandwidth_r = decodeSuffix(values[5])
+    z.bandwidth_w = decodeSuffix(values[6])
+    return
+}
+
 func (z *zpool) getStatus() {
 	output := runZpoolCommand([]string{"status", z.name})
 	err := z.getProviders(output)
@@ -96,6 +114,11 @@ func (z *zpool) getStatus() {
 	if err != nil {
 		log.Fatal("Error parsing zpool capacity")
 	}
+    output = runZpoolCommand([]string{"iostat", z.name, "1", "2"})
+    err = z.getIostat(output)
+    if err != nil {
+        log.Fatal("Error parsing zpool iostat")
+    }
 }
 
 func checkExistance(pool string) (err error) {
@@ -112,6 +135,7 @@ func runZpoolCommand(args []string) string {
 		log.Fatal("Could not find zpool in PATH")
 	}
 	cmd := exec.Command(zpoolPath, args...)
+    cmd.Stdin = os.Stdin
 	out, _ := cmd.CombinedOutput()
 	return fmt.Sprintf("%s", out)
 }
