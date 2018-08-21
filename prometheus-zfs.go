@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	toolVersion = "0.1.1"
+	toolVersion = "0.2.0"
 )
 
 // Exporter collects zpool stats from the given zpool and exports them using
@@ -124,7 +124,7 @@ func init() {
 
 func main() {
 	if versionCheck {
-		fmt.Printf("prometheus-zfs v%s (https://github.com/eripa/prometheus-zfs)\n", toolVersion)
+		fmt.Printf("prometheus-zfs v%s (https://github.com/merlin83b/prometheus-zfs)\n", toolVersion)
 		os.Exit(0)
 	}
 	err := checkExistance(zfsPool)
